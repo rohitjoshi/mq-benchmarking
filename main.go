@@ -67,6 +67,10 @@ func newTester(subject string, testLatency bool, msgCount, msgSize int) *benchma
 		surge := mq.NewSurgeMQ(msgCount, testLatency)
 		messageSender = surge
 		messageReceiver = surge
+	case "lightq":
+		lightq := mq.NewLightQ(msgCount, testLatency)
+		messageSender = lightq
+		messageReceiver = lightq
 	default:
 		return nil
 	}

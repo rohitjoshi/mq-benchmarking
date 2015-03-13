@@ -3,16 +3,15 @@ package mq
 import (
 	"encoding/json"
 	"github.com/pebbe/zmq4"
-	"github.com/rohitjoshi/mq-benchmarking/benchmark"
-	//"log"
+	"github.com/tylertreat/mq-benchmarking/benchmark"
 	"strings"
 	"time"
 )
 
 type LightQ struct {
-	handler  benchmark.MessageHandler
-	sender   *zmq4.Socket
-	receiver *zmq4.Socket
+	handler      benchmark.MessageHandler
+	sender       *zmq4.Socket
+	receiver     *zmq4.Socket
 	send_counter int64
 }
 
@@ -32,16 +31,14 @@ type JoinResp struct {
 	cmd      string `json:"cmd"`
 	status   string `json:"status"`
 	topic    string `json:"topic"`
-	
 }
 
 var (
-  stats_cmd string = `{"cmd" :"stats", "topic": "testfile",  "user_id": "test_admin", "password": "T0p$3cr31"}`
+	stats_cmd string = `{"cmd" :"stats", "topic": "testfile",  "user_id": "test_admin", "password": "T0p$3cr31"}`
 )
 
 func createTopic(admin *zmq4.Socket) (producer_bind_uri string, consumer_bind_uri string) {
-	
-	
+
 	str := `{"cmd": "create_topic", "admin_password": "T0p$3cr31", "admin_user_id": "lightq_admin", "broker_type": "file", "topic": "testfile", "user_id": "test_admin", "password": "T0p$3cr31"}`
 	//log.Print("Sending create topic command %s", str)
 	admin.SendMessage(str)
@@ -80,7 +77,7 @@ func createTopic(admin *zmq4.Socket) (producer_bind_uri string, consumer_bind_ur
 	json.Unmarshal([]byte(reply[0]), &res)
 
 	consumer_bind_uri = res.bind_uri
-//	log.Print("consumer_bind_uri: %s", consumer_bind_uri)
+	//	log.Print("consumer_bind_uri: %s", consumer_bind_uri)
 	consumer_bind_uri = strings.Replace(consumer_bind_uri, "*", "127.0.0.1", -1)
 	admin.Close()
 
@@ -91,7 +88,7 @@ func createTopic(admin *zmq4.Socket) (producer_bind_uri string, consumer_bind_ur
 
 func NewLightQ(numberOfMessages int, testLatency bool) *LightQ {
 	ctx, _ := zmq4.NewContext()
-    admin, err := ctx.NewSocket(zmq4.REQ)
+	admin, err := ctx.NewSocket(zmq4.REQ)
 	if err != nil {
 		panic(err)
 	}
@@ -137,7 +134,7 @@ func (lightq *LightQ) Send(message []byte) {
 	// TODO: Should DONTWAIT be used? Possibly overloading consumer.
 	lightq.sender.SendBytes(message, zmq4.DONTWAIT)
 	lightq.send_counter++
-	if(lightq.send_counter % 100000 == 0) {
+	if lightq.send_counter%100000 == 0 {
 		time.Sleep(10 * time.Millisecond)
 	}
 }
