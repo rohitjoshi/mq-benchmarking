@@ -2,7 +2,7 @@ package mq
 
 import (
 	"github.com/Shopify/sarama"
-	"github.com/rohitjoshi/mq-benchmarking/benchmark"
+	"github.com/tylertreat/mq-benchmarking/benchmark"
 )
 
 type Kafka struct {

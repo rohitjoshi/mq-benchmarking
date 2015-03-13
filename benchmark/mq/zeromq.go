@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/pebbe/zmq4"
-	"github.com/rohitjoshi/mq-benchmarking/benchmark"
+	"github.com/tylertreat/mq-benchmarking/benchmark"
 )
 
 type Zeromq struct {
