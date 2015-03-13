@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"log"
 	"time"
+    "math/rand"
 )
 
 type MessageSender interface {
@@ -14,8 +15,22 @@ type SendEndpoint struct {
 	MessageSender MessageSender
 }
 
+
+
+
+func randSeq(n int, letters []rune) string {
+    b := make([]rune, n)
+    for i := range b {
+        b[i] = letters[rand.Intn(len(letters))]
+    }
+    return string(b)
+}
+
 func (endpoint SendEndpoint) TestThroughput(messageSize int, numberToSend int) {
-	message := make([]byte, messageSize)
+	//message := make([]byte, messageSize)
+	var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+	message := []byte(randSeq(messageSize, letters))
+	
 	start := time.Now().UnixNano()
 	for i := 0; i < numberToSend; i++ {
 		endpoint.MessageSender.Send(message)

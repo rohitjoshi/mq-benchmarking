@@ -5,30 +5,43 @@ import (
 	"time"
 
 	"github.com/apcera/nats"
-	"github.com/tylertreat/mq-benchmarking/benchmark"
+	"github.com/rohitjoshi/mq-benchmarking/benchmark"
 )
 
 type Gnatsd struct {
-	handler     benchmark.MessageHandler
-	conn        *nats.Conn
-	subject     string
-	testLatency bool
+	handler     	benchmark.MessageHandler
+	connPub        *nats.Conn
+	connSub        *nats.Conn
+	subject        string
+	testLatency    bool
 }
 
 func NewGnatsd(numberOfMessages int, testLatency bool) *Gnatsd {
-	conn, _ := nats.Connect(nats.DefaultURL)
+	connPub, _ := nats.Connect(nats.DefaultURL)
+	connSub, _ := nats.Connect(nats.DefaultURL)
 
 	// We want to be alerted if we get disconnected, this will
 	// be due to Slow Consumer.
-	conn.Opts.AllowReconnect = false
+	connPub.Opts.AllowReconnect = false
+	connSub.Opts.AllowReconnect = false
 
 	// Report async errors.
-	conn.Opts.AsyncErrorCB = func(nc *nats.Conn, sub *nats.Subscription, err error) {
+	connPub.Opts.AsyncErrorCB = func(nc *nats.Conn, sub *nats.Subscription, err error) {
+		panic(fmt.Sprintf("NATS: Received an async error! %v\n", err))
+	}
+	// Report async errors.
+	connSub.Opts.AsyncErrorCB = func(nc *nats.Conn, sub *nats.Subscription, err error) {
 		panic(fmt.Sprintf("NATS: Received an async error! %v\n", err))
 	}
 
 	// Report a disconnect scenario.
-	conn.Opts.DisconnectedCB = func(nc *nats.Conn) {
+	connPub.Opts.DisconnectedCB = func(nc *nats.Conn) {
+		fmt.Printf("Getting behind! %d\n", nc.OutMsgs-nc.InMsgs)
+		panic("NATS: Got disconnected!")
+	}
+
+	// Report a disconnect scenario.
+	connSub.Opts.DisconnectedCB = func(nc *nats.Conn) {
 		fmt.Printf("Getting behind! %d\n", nc.OutMsgs-nc.InMsgs)
 		panic("NATS: Got disconnected!")
 	}
@@ -46,19 +59,21 @@ func NewGnatsd(numberOfMessages int, testLatency bool) *Gnatsd {
 	return &Gnatsd{
 		handler:     handler,
 		subject:     "test",
-		conn:        conn,
+		connPub:        connPub,
+		connSub:        connSub,
 		testLatency: testLatency,
 	}
 }
 
 func (g *Gnatsd) Setup() {
-	g.conn.Subscribe(g.subject, func(message *nats.Msg) {
+	g.connSub.Subscribe(g.subject, func(message *nats.Msg) {
 		g.handler.ReceiveMessage(message.Data)
 	})
 }
 
 func (g *Gnatsd) Teardown() {
-	g.conn.Close()
+	g.connPub.Close()
+	g.connSub.Close()
 }
 
 const (
@@ -77,20 +92,25 @@ const (
 
 func (g *Gnatsd) Send(message []byte) {
 	// Check if we are behind by >= 1MB bytes
-	bytesDeltaOver := g.conn.OutBytes-g.conn.InBytes >= maxBytesBehind
+	bytesDeltaOver := g.connPub.OutBytes-g.connSub.InBytes >= maxBytesBehind
 	// Check if we are behind by >= 65k msgs
-	msgsDeltaOver := g.conn.OutMsgs-g.conn.InMsgs >= maxMsgsBehind
+	msgsDeltaOver := g.connPub.OutMsgs-g.connSub.InMsgs >= maxMsgsBehind
 	// Override for latency test.
 	if g.testLatency {
-		msgsDeltaOver = g.conn.OutMsgs-g.conn.InMsgs >= maxLatencyMsgsBehind
+		msgsDeltaOver = g.connPub.OutMsgs-g.connSub.InMsgs >= maxLatencyMsgsBehind
 	}
 
 	// If we are behind on either condition, sleep a bit to catch up receiver.
 	if bytesDeltaOver || msgsDeltaOver {
-		time.Sleep(delay)
+	//	time.Sleep(delay)
 	}
 
-	g.conn.Publish(g.subject, message)
+	if(g.connPub.OutMsgs % 100000 == 0) {
+		time.Sleep(10 * time.Millisecond)
+		//log.Print("waiting..")
+	}
+
+	g.connPub.Publish(g.subject, message)
 }
 
 func (g *Gnatsd) MessageHandler() *benchmark.MessageHandler {

@@ -6,8 +6,8 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/tylertreat/mq-benchmarking/benchmark"
-	"github.com/tylertreat/mq-benchmarking/benchmark/mq"
+	"github.com/rohitjoshi/mq-benchmarking/benchmark"
+	"github.com/rohitjoshi/mq-benchmarking/benchmark/mq"
 )
 
 func newTester(subject string, testLatency bool, msgCount, msgSize int) *benchmark.Tester {
@@ -63,10 +63,10 @@ func newTester(subject string, testLatency bool, msgCount, msgSize int) *benchma
 		iris := mq.NewIris(msgCount, testLatency)
 		messageSender = iris
 		messageReceiver = iris
-	case "surge":
-		surge := mq.NewSurgeMQ(msgCount, testLatency)
-		messageSender = surge
-		messageReceiver = surge
+	case "lightq":
+		lightq := mq.NewLightQ(msgCount, testLatency)
+		messageSender = lightq
+		messageReceiver = lightq
 	default:
 		return nil
 	}

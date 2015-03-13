@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/op/go-nanomsg"
-	"github.com/tylertreat/mq-benchmarking/benchmark"
+	"github.com/rohitjoshi/mq-benchmarking/benchmark"
 )
 
 type Nanomsg struct {

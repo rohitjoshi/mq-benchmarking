@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/kr/beanstalk"
-	"github.com/tylertreat/mq-benchmarking/benchmark"
+	"github.com/rohitjoshi/mq-benchmarking/benchmark"
 )
 
 type Beanstalkd struct {

@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/streadway/amqp"
-	"github.com/tylertreat/mq-benchmarking/benchmark"
+	"github.com/rohitjoshi/mq-benchmarking/benchmark"
 )
 
 type consumer struct {
